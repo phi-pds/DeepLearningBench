@@ -1,2 +1,2 @@
-# xeonphibench
-xeon phi benchmark
+# Xeon Phi benchmark
+Intel Xeon Phi Benchmark
