@@ -1,0 +1,4 @@
+*.pyc
+results
+sanity
+config.mk

@@ -18,9 +18,9 @@ for cpu in cpuinfo:
             primaries.add(processor)
             continue
         raise
-    ss = set(map(int, s.split(",")))
-    if int(processor) == min(ss):
-        primaries.add(processor)
+    #ss = set(map(int, s.split(",")))
+    #if int(processor) == min(ss):
+    #    primaries.add(processor)
 cpuinfo = [cpu for cpu in cpuinfo if cpu["processor"] in primaries]
 
 def seq(cpuinfo):
