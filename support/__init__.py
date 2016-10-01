@@ -303,3 +303,45 @@ def perfLocked(host, cmdSsh, cmdSudo, cmdRun):
         return cmdSsh + cmdSudo + cmdRun
     # XXX Shared lock option
     return cmdSsh + ["perflock"] + cmdSudo + cmdRun
+
+__all__.append("PerfMonitor")
+class PerfMonitor(Task, SourceFileProvider):
+    __info__ = ["host"]
+
+    def __init__(self, host):
+        Task.__init__(self, host = host)
+        self.host = host
+        self.__gen = 0
+        self.__script = self.queueSrcFile(host, "perfmon")
+
+    def stat_start(self):
+        self.__logPath = self.host.getLogPath(self) + ".perf.data.%d" % self.__gen
+        print("PerfMonitor start")
+        cmd = [self.__script, "stat_start", self.__logPath]
+        self.__p = self.host.r.run(cmd, stdin = CAPTURE,
+                                          wait = False)
+       
+    def stat_stop(self):
+        self.__logPath = self.host.getLogPath(self) + ".perf.data.%d" % self.__gen
+        self.__gen += 1
+        print("PerfMonitor stop")
+        cmd = [self.__script, "stat_stop", self.__logPath]
+        self.__p = self.host.r.run(cmd, stdin = CAPTURE,
+                                          wait = False)
+
+
+    def record_start(self):
+        self.__logPath = self.host.getLogPath(self) + ".perf.data.%d" % self.__gen
+        print("PerfMonitor record start")
+        cmd = [self.__script, "record_start", self.__logPath]
+        self.__p = self.host.r.run(cmd, stdin = CAPTURE,
+                                          wait = False)
+       
+    def record_stop(self):
+        self.__logPath = self.host.getLogPath(self) + ".perf.data.%d" % self.__gen
+        self.__gen += 1
+        print("PerfMonitor record stop")
+        cmd = [self.__script, "record_stop", self.__logPath]
+        self.__p = self.host.r.run(cmd, stdin = CAPTURE,
+                                          wait = False)
+        self.__p.wait(True)
