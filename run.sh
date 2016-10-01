@@ -1,3 +1,3 @@
-!/bin/bash
+#!/bin/bash
 make 
-make bench
+python config.py

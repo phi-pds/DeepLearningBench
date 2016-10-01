@@ -11,5 +11,3 @@ all-hello: always
 
 clean-hello: always
 	$(MAKE) -C hello clean
-bench:
-	python config.py

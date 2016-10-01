@@ -10,16 +10,18 @@ __all__ = []
 
 __all__.append("HelloLoad")
 class HelloLoad(Task, ResultsProvider, SourceFileProvider):
-    __info__ = ["host", "*sysmonOut"]
+    __info__ = ["host",  "trial", "helloPath", "*sysmonOut"]
 
-    def __init__(self, host, trial, cores, sysmon):
+    def __init__(self, host, trial, helloPath, cores, sysmon):
         Task.__init__(self, host = host, trial = trial)
         ResultsProvider.__init__(self, cores)
         self.host = host
+        self.trial = trial 
         self.sysmon = sysmon
+        self.helloPath = helloPath
 
     def __cmd(self, target):
-        return ["ls"]
+        return [os.path.join(self.helloPath, "hello")]
 
     def wait(self, m):
         logPath = self.host.getLogPath(self)
@@ -48,6 +50,7 @@ class HelloRunner(object):
         m += host
         m += HostInfo(host)
         fs = FileSystem(host, cfg.fs, clean = True)
+        helloPath = os.path.join(cfg.benchRoot, "hello")
         m += fs
         # It's really hard to predict what make will access, so we
         # prefetch the whole source tree.  This, combined with the
@@ -57,7 +60,7 @@ class HelloRunner(object):
         sysmon = SystemMonitor(host)
         m += sysmon
         for trial in range(cfg.trials):
-            m += HelloLoad(host, trial, cfg.cores, sysmon)
+            m += HelloLoad(host, trial, helloPath, cfg.cores, sysmon)
         # m += cfg.monitors
         m.run()
 

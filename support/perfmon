@@ -1,0 +1,90 @@
+#!/usr/bin/python
+import os
+import sys
+import subprocess
+import time
+import operator
+import pdb
+from os.path import join
+from functools import reduce
+
+CUR_DIR     = os.path.abspath(os.path.dirname(__file__))
+
+class PerfMon(object):
+    LEVEL_LOW                     = 0
+    LEVEL_PERF_RECORD             = 1
+    LEVEL_PERF_STAT               = 2
+    PERF_SAMPLE_RATE              = 1000
+
+    # init
+    def __init__(self, \
+                 level = int(os.environ.get('PERFMON_LEVEL', "0")), \
+                 ldir  =     os.environ.get('PERFMON_LDIR',  "."), \
+                 lfile =     os.environ.get('PERFMON_LFILE', "_perfmon.stat" ),\
+                 duration = 30):
+        (self.LEVEL, self.DIR, self.FILE) = (level, ldir, lfile)
+        self.duration = duration
+
+    # entry
+    def start(self):
+        print("test start")
+        if self.LEVEL == PerfMon.LEVEL_PERF_RECORD:
+            self._perf_record_start()
+        if self.LEVEL == PerfMon.LEVEL_PERF_STAT:
+            self._perf_stat_start()
+
+    def stop(self):
+        print("test stop")
+        try:
+            if self.LEVEL == PerfMon.LEVEL_PERF_RECORD:
+                self._perf_record_stop()
+            if self.LEVEL == PerfMon.LEVEL_PERF_STAT:
+                self._perf_stat_stop()
+        finally:
+            return
+
+    # perf stat
+    def _perf_stat_stop(self):
+        pass
+
+    def _perf_stat_start(self):
+        perf_out = os.path.normpath(
+                os.path.join(self.DIR, "%s.perf.stat.data" % self.FILE))
+        self._exec_cmd("sudo perf stat -a -g -o %s sleep %s &" %
+                (perf_out, self.duration))
+
+    # perf record
+    def _perf_record_stop(self):
+        self._perf_stop()
+
+    def _perf_record_start(self):
+        perf_out = os.path.normpath(
+            os.path.join(self.DIR, "%s.perf.data" % self.FILE))
+        self._exec_cmd("sudo perf record -F %s -a -g -o %s &" %
+                       (PerfMon.PERF_SAMPLE_RATE, perf_out))
+
+    def _perf_stop(self):
+        with open("/dev/null", "a") as fd:
+            self._exec_cmd("sudo kill -INT $(pgrep perf)", fd)
+
+    def _exec_cmd(self, cmd, out=None):
+        p = subprocess.Popen(cmd, shell=True, stdout=out, stderr=out)
+        p.wait()
+        return p
+
+if __name__ == "__main__":
+
+    # get command
+    if len(sys.argv) is not 2:
+        exit(1)
+    cmd = sys.argv[1]
+
+    # run operation
+    op = {"start":PerfMon.start,
+          "stop":PerfMon.stop}
+    def nop(x):
+        exit(2)
+    cmd_fn = op.get(cmd, nop)
+
+    perfmon = PerfMon()
+    cmd_fn(perfmon)

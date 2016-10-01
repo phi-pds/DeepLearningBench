@@ -34,62 +34,6 @@ class ResultsProvider(object):
         self.units = units
         self.real = real
 
-__all__.append("IXGBE")
-class IXGBE(Task, SourceFileProvider):
-    __info__ = ["host", "iface", "queues", "flowDirector"]
-
-    # Flow-director policies
-    fdOptions = {
-        # Pin flows by monitoring every 20th outgoing packet.  This is
-        # the policy implemented by the standard IXGBE driver.
-        "pin-every-20" : 0,
-        # Route traffic for a set of ports to the right core
-        # (used by memcached)
-        "fixed-port-routing" : 1,
-        # Spread incoming flows among all RX queues (used by Apache)
-        "spread-incoming" : 2}
-
-    def __init__(self, host, iface, queues, flowDirector = "pin-every-20"):
-        Task.__init__(self, host = host, iface = iface)
-        self.host = host
-        self.iface = iface
-        self.queues = queues
-        self.flowDirector = flowDirector
-        if flowDirector not in IXGBE.fdOptions:
-            raise ValueError("Unknown flowDirector policy %r" % flowDirector)
-
-        self.__script = self.queueSrcFile(host, "ixgbe-set-affinity")
-
-    def start(self):
-        # We re-insert the module every time not just so we can change
-        # the flow-director policy, but because the driver uses the
-        # number of online cores at initialization time to set the
-        # number of queues in the card, which results in better
-        # balancing than any IRQ direction we can do.
-        for l in self.host.r.readFile("/proc/modules").splitlines():
-            modname = l.split()[0]
-            if modname.startswith("ixgbe"):
-                self.log("rmmod %s" % modname)
-                self.host.sudo.run(["rmmod", modname])
-                break
-        args = ["modprobe", "ixgbe"]
-        if self.flowDirector != "pin-every-20":
-            args.append("FDirPolicy=%d" % IXGBE.fdOptions[self.flowDirector])
-        self.log(" ".join(args))
-        self.host.sudo.run(args)
-
-        self.log("Setting %s queue affinity to %s" % (self.iface, self.queues))
-        self.host.sudo.run([self.__script, self.iface, self.queues],
-                           stdout = self.host.getLogPath(self))
-
-    def stop(self):
-        self.reset()
-
-    def reset(self):
-        self.host.sudo.run([self.__script, self.iface, "CPUS"],
-                           stdout = self.host.getLogPath(self))
-        self.log("Reset IXGBE IRQ masks to all CPUs")
-
 CPU_CACHE = {}
 
 __all__.append("SetCPUs")

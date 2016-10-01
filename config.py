@@ -7,8 +7,8 @@ import support.rsshash as rsshash
 mk = ConfigSpace.mk
 shared = ConfigSpace.unit()
 
-tom = Host("MOSS", None)
-shared *= mk(primaryHost = tom)
+knl = Host("MOSS", None)
+shared *= mk(primaryHost = knl)
 shared *= mk(benchRoot = "~/github/xeonphibench")
 shared *= mk(fs = "tmpfs-separate")
 
