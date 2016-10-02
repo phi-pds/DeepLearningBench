@@ -16,7 +16,7 @@ class PerfMon(object):
     # init
     def __init__(self, \
                  log =     "/tmp/perf.data", \
-                 duration = 30):
+                 duration = 5):
         (self.LOG) = (log)
         self.duration = duration
 
@@ -35,7 +35,8 @@ class PerfMon(object):
 
     # perf stat
     def _perf_stat_stop(self):
-        self._perf_record_stop()
+        self._exec_cmd("sudo chmod +r %s" % self.LOG)
+	pass
     
     def _perf_stop(self):
         with open("/dev/null", "a") as fd:
@@ -44,8 +45,8 @@ class PerfMon(object):
     def _perf_stat_start(self):
         perf_out = os.path.normpath(
                 os.path.join(self.LOG))
-        self._exec_cmd("sudo perf stat -a -o %s -g &" %
-                (perf_out ))
+        self._exec_cmd("sudo perf stat -a -o %s -g sleep %d&" %
+                (perf_out, self.duration ))
 
     # perf record
     def _perf_record_stop(self):

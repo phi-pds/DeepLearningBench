@@ -7,19 +7,25 @@ import support.rsshash as rsshash
 mk = ConfigSpace.mk
 shared = ConfigSpace.unit()
 
-knl = Host("MOSS", None)
+knl = Host("KNL", None)
 shared *= mk(primaryHost = knl)
 shared *= mk(benchRoot = "~/github/xeonphibench")
 shared *= mk(fs = "tmpfs-separate")
 
 shared *= mk(trials = 3)
 shared *= mk(hotplug = True)
-shared *= mk(cores = [4], nonConst = True)
+shared *= mk(cores = [255], nonConst = True)
 
 import hello
 hello = mk(benchmark = hello.runner, nonConst = True)
 
-configSpace = hello.merge(shared)
+import Machine_learning
+Machine_learning = mk(benchmark = Machine_learning.runner, nonConst = True)
+
+configSpace = ((hello + Machine_learning)
+               .merge(shared))
+#configSpace = hello.merge(shared)
+#configSpace = Machine_learning.merge(shared)
 
 if __name__ == "__main__":
     from mparts.manager import generateManagers

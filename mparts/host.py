@@ -101,6 +101,7 @@ class Host(Task, SourceFileProvider):
         self.__routes = {}
         self.__rConn = None
         self.__sudoConn = None
+        #self.__rootDir = "/tmp/mparts"
         self.__rootDir = "/tmp/mparts-%x" % abs(hash(SCRIPT_PATH))
         self.__isLocalhost = isLocalhost(host)
 
@@ -276,7 +277,7 @@ class Host(Task, SourceFileProvider):
                "--filter", "P *.pyc",
                # XXX HACK HACK HACK.  Perhaps SourceFileProvider
                # should provide protect patterns.
-               "--filter", "P *.o", "--filter", "P /home/kesl/github/mosbench-ext/memcached/mcload/mdc_udp"
+               "--filter", "P *.o"
                ]
         parents = set()
         for sf in sfs:
@@ -304,6 +305,8 @@ class Host(Task, SourceFileProvider):
         else:
             cmd.append(self.host + ":" + self.__rootDir)
         subprocess.check_call(cmd)
+	# workaround for CentOS
+	os.chmod(self.__rootDir, 755)
 
     #
     # Utilities
