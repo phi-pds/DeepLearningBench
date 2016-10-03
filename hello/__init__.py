@@ -34,8 +34,8 @@ class HelloLoad(Task, ResultsProvider, SourceFileProvider):
         # XXX If we want to eliminate the serial startup, monitor
         # starting with "  CHK include/generated/compile.h" or maybe
         # with the first "  CC" line.
-        self.perfmon.stat_start()
-        #self.perfmon.record_start()
+        #self.perfmon.stat_start()
+        self.perfmon.record_start()
         self.host.r.run(self.sysmon.wrap(self.__cmd("")),
                         stdout = logPath)
 
@@ -45,8 +45,8 @@ class HelloLoad(Task, ResultsProvider, SourceFileProvider):
         log = self.host.r.readFile(logPath)
         self.sysmonOut = self.sysmon.parseLog(log)
         self.setResults(1, "build", "builds", self.sysmonOut["time.real"])
-        #self.perfmon.record_stop()
-        self.perfmon.stat_stop()
+        self.perfmon.record_stop()
+        #self.perfmon.stat_stop()
 
 class HelloRunner(object):
     def __str__(self):

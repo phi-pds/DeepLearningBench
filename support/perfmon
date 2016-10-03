@@ -19,6 +19,7 @@ class PerfMon(object):
                  duration = 5):
         (self.LOG) = (log)
         self.duration = duration
+        self.record_pid = 10000
 
     # entry
     def stat_start(self):
@@ -34,40 +35,30 @@ class PerfMon(object):
         self._perf_record_stop()
 
     # perf stat
-    def _perf_stat_stop(self):
-        self._exec_cmd("sudo chmod +r %s" % self.LOG)
-	pass
-    
-    def _perf_stop(self):
-        with open("/dev/null", "a") as fd:
-            self._exec_cmd("sudo kill -INT $(pgrep perf)", fd)
-
     def _perf_stat_start(self):
         perf_out = os.path.normpath(
                 os.path.join(self.LOG))
         self._exec_cmd("sudo perf stat -a -o %s -g sleep %d&" %
                 (perf_out, self.duration ))
 
-    # perf record
-    def _perf_record_stop(self):
-        print("record stop")
-        self._perf_stop()
+    def _perf_stat_stop(self):
+        self._exec_cmd("sudo chmod +r %s" % self.LOG)
+	pass
 
     def _perf_record_start(self):
-        print("record start")
         perf_out = os.path.normpath(
             os.path.join(self.LOG))
-        self._exec_cmd("sudo perf record -F %s -a -g -o %s &" %
+	p = self._exec_cmd("sudo perf record -F %s -a -g -o %s &" %
                        (PerfMon.PERF_SAMPLE_RATE, perf_out))
+        self.record_pid = p.pid
 
-    def _perf_stop(self):
+    def _perf_record_stop(self):
         with open("/dev/null", "a") as fd:
-            self._exec_cmd("sudo kill -INT $(pgrep perf)", fd)
+            self._exec_cmd("sudo kill -INT %d" % self.record_pid, fd)
         self._exec_cmd("sudo chmod +r %s" % self.LOG)
         
     def _exec_cmd(self, cmd, out=None):
         p = subprocess.Popen(cmd, shell=True, stdout=out, stderr=out)
-        #p.wait()
         return p
 
 if __name__ == "__main__":
