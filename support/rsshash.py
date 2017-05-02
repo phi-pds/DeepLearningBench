@@ -6,6 +6,7 @@ __all__ = ["RSSHash", "LinuxIXGBE", "PortGenerator"]
 
 import socket
 
+
 IXGBE_MAX_RSS_INDICES = 16
 
 def bits(bytes):

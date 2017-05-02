@@ -1,5 +1,7 @@
 import os
+
 import cPickle as pickle
+
 
 __all__ = ["Experiment", "experiments", "series", "filterInfo", "the"]
 
@@ -181,6 +183,7 @@ def filterInfo(info, **selectors):
     relations."""
 
     className = selectors.pop("className", None)
+    print 'KESL' + className
 
     for dct in info:
         if className != None:

@@ -1,7 +1,9 @@
 from __future__ import with_statement
 
 import sys, os, subprocess, errno, hashlib, threading, signal, gzip
+
 from mparts.rpc import RPCServer, RPCProxy
+
 
 LOG_COMMANDS = True 
 

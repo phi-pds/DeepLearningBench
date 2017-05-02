@@ -1,9 +1,10 @@
 import sys, os, hashlib, subprocess, tempfile
 
-import rpc, server
 from manager import Task, ResultPath
-from util import maybeMakedirs, relpath, isLocalhost
+import rpc, server
 from server import *
+from util import maybeMakedirs, relpath, isLocalhost
+
 
 __all__ = ["Host", "SourceFileProvider", "HostInfo"] + server.__all__
 

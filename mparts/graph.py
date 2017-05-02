@@ -1,5 +1,6 @@
 import os, subprocess, tempfile, re
 
+
 __all__ = ["Gnuplot"]
 
 SQUOTE_RE = re.compile("[^\\'\n]*$")

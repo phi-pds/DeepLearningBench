@@ -1,0 +1,11 @@
+#!/usr/bin/python
+
+import sys, os, signal, subprocess, errno, time
+import subprocess
+
+WARMUP = 3
+DURATION = 15
+print "%d messages (%.2f messages/sec/core)" % \
+        (10, float(10)/DURATION/1)
+
+

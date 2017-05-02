@@ -1,9 +1,10 @@
 from __future__ import with_statement
 
 import sys, os, time
-import cPickle as pickle
 
+import cPickle as pickle
 from util import Progress, maybeMakedirs
+
 
 __all__ = ["Manager", "Task", "WaitForUser", "ResultPath", "generateManagers"]
 

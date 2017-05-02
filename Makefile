@@ -1,5 +1,4 @@
-#TARGETS=hello hello2 
-TARGETS=hello Machine_learning
+TARGETS=hello inception
 
 all: $(addprefix all-,$(TARGETS))
 clean: $(addprefix clean-,$(TARGETS))
@@ -12,8 +11,9 @@ all-hello: always
 clean-hello: always
 	$(MAKE) -C hello clean
 
-all-Machine_learning: always
-	$(MAKE) -C Machine_learning all
+all-inception: always
+	$(MAKE) -C inception all
 
-clean-Machine_learning: always
-	$(MAKE) -C Machine_learning clean
+clean-inception: always
+	$(MAKE) -C inception clean
+

@@ -1,7 +1,8 @@
 import sys, os, time, errno
 
-from mparts.manager import Task
 from mparts.host import *
+from mparts.manager import Task
+
 
 __all__ = []
 
@@ -33,95 +34,6 @@ class ResultsProvider(object):
         self.unit = unit
         self.units = units
         self.real = real
-
-CPU_CACHE = {}
-
-__all__.append("SetCPUs")
-class SetCPUs(Task, SourceFileProvider):
-    __info__ = ["host", "num", "hotplug", "seq"]
-
-    def __init__(self, host, num, hotplug = True, seq = "seq"):
-        Task.__init__(self, host = host)
-        self.host = host
-        self.num = num
-        self.hotplug = hotplug
-        self.seq = seq
-
-        self.__script = self.queueSrcFile(host, "set-cpus")
-        self.__cpuSeq = self.queueSrcFile(host, "cpu-sequences")
-
-    def getSeq(self):
-        if self.host not in CPU_CACHE:
-            raise ValueError(
-                "Cannot get CPU sequences before SetCPUs has started")
-        return CPU_CACHE[self.host][1][self.seq][:self.num]
-
-    def getSeqStr(self):
-        return ",".join(map(str, self.getSeq()))
-
-    def start(self):
-        # oprofile has a habit of panicking if you hot plug CPU's
-        # under it
-        if self.hotplug:
-            try:
-                self.host.sudo.run(["opcontrol", "--deinit"],
-                                   wait = UNCHECKED)
-            except OSError, e:
-                if e.errno != errno.ENOENT:
-                    raise
-
-        if self.host not in CPU_CACHE:
-            # Make sure all CPU's are online.  If we're not allowed to
-            # hot plug, we'll just have to assume this is true.
-            if self.hotplug:
-                self.host.sudo.run([self.__script, "-i"], stdin = DISCARD)
-
-            # Get CPU sequences
-            p = self.host.r.run([self.__cpuSeq], stdout = CAPTURE)
-            seqs = {}
-            for l in p.stdoutRead().splitlines():
-                name, cpus = l.strip().split(" ", 1)
-                seqs[name] = map(int, cpus.split(","))
-
-            # Start an interactive set-cpus.  We don't actually use
-            # this, but when we disconnect from the host, the EOF to
-            # this will cause it to re-enable all CPUs.  This way we
-            # don't have to online all of the CPU's between each
-            # experiment.  We'll do our best to online all of the
-            # CPU's at the end before exiting, but even if we die a
-            # horrible death, hopefully this will online everything.
-            if self.hotplug:
-                recover = self.host.sudo.run([self.__script, "-i"],
-                                             stdin = CAPTURE, wait = None)
-            else:
-                recover = None
-
-            CPU_CACHE[self.host] = (recover, seqs)
-        else:
-            seqs = CPU_CACHE[self.host][1]
-
-        try:
-            seq = seqs[self.seq]
-        except KeyError:
-            raise ValueError("Unknown CPU sequence %r" % self.seq)
-        if len(seq) < self.num:
-            raise ValueError("Requested %d cores, but only %d are available" %
-                             (self.num, len(seq)))
-
-        if self.hotplug:
-            cmd = [self.__script, ",".join(map(str, seq[:self.num]))]
-            self.host.sudo.run(cmd, wait = CHECKED)
-
-    def reset(self):
-        # Synchronously re-enable all CPU's
-        if self.host not in CPU_CACHE:
-            return
-
-        sc = CPU_CACHE[self.host][0]
-        if sc:
-            sc.stdinClose()
-            sc.wait()
-            del CPU_CACHE[self.host]
 
 PREFETCH_CACHE = set()
 
@@ -241,14 +153,12 @@ class SystemMonitor(Task, SourceFileProvider):
         mine = [l for l in log.splitlines() if l.startswith("[TimeMonitor] ")]
         if len(mine) == 0:
             raise ValueError("No sysmon report found in log file")
-        if len(mine) > 1:
-            raise ValueError("Multiple sysmon reports found in log file")
-
-        parts = mine[0].split()[1:]
-        res = {}
-        while parts:
-            k, v = parts.pop(0), parts.pop(0)
-            res["time." + k] = float(v)
+        for i in range(len(mine)) :
+            parts = mine[i].split()[1:]
+            res = {}
+            while parts:
+                k, v = parts.pop(0), parts.pop(0)
+                res["time." + k] = float(v)
         return res
 
 __all__.append("ExplicitSystemMonitor")
@@ -291,18 +201,6 @@ class ExplicitSystemMonitor(SystemMonitor):
         # Start a new monitor, for multiple trials
         self.start()
         return self.parseLog(log)
-
-__all__.append("perfLocked")
-def perfLocked(host, cmdSsh, cmdSudo, cmdRun):
-    """This is a host command modifier that takes a performance lock
-    using 'perflock' while the remote RPC server is running."""
-
-    if cmdSudo:
-        # Hosts always make a regular connection before a root
-        # connection and we wouldn't want to deadlock with ourselves.
-        return cmdSsh + cmdSudo + cmdRun
-    # XXX Shared lock option
-    return cmdSsh + ["perflock"] + cmdSudo + cmdRun
 
 __all__.append("PerfMonitor")
 class PerfMonitor(Task, SourceFileProvider):

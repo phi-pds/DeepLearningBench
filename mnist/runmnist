@@ -1,0 +1,23 @@
+#!/usr/bin/python
+
+import os
+import shutil
+import subprocess
+import sys
+import multiprocessing
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MNIST_DIR = os.path.join(SCRIPT_DIR, 'mnist')
+
+if __name__ == '__main__':
+
+    build_script = "python convolutional.py"
+
+    retcode = subprocess.call(
+          ['/bin/bash',
+           '-c', build_script],
+          cwd=MNIST_DIR)
+
+    if retcode:
+        print '@@@MNIST FAILURE@@@'
+
